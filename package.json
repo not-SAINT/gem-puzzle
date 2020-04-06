@@ -1,0 +1,25 @@
+{
+  "name": "gem-puzzle",
+  "version": "1.0.0",
+  "description": "[Task](https://github.com/rolling-scopes-school/tasks/blob/master/tasks/codejam-the-gem-puzzle.md)",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/not-SAINT/gem-puzzle.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/not-SAINT/gem-puzzle/issues"
+  },
+  "homepage": "https://github.com/not-SAINT/gem-puzzle#readme",
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2"
+  }
+}
