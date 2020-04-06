@@ -1,0 +1,109 @@
+.wrapper {
+  width: 600px;
+  height: 650px;
+
+  margin: 0 auto;
+  padding-top: 1px;
+
+  background-color: #aee4e4;
+}
+
+.control-container {
+  display: flex;
+  width: 500px;
+  height: 40px;
+  margin: 10px auto;
+  justify-content: space-around;
+  align-items: center;
+
+
+  background-color: #dba3a3;
+}
+
+.control-button {
+  height: 25px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.control-button:hover {
+  background-color: #d7fa9e;
+}
+
+.game-state {
+  display: flex;
+  width: 500px;
+  height: 30px;
+  margin: 0 auto;
+  justify-content: space-around;
+
+  background-color: #dba3a3;
+}
+
+.game-state label {
+  font-size: 26px;
+}
+
+.game-state label:nth-child(2n) {
+   margin: 0 100px 0 10px; 
+}
+
+.game-state label:first-child {
+  margin: 0 0 0 100px;
+}
+
+.game-field {
+  /* display: flex; */
+  position: relative;
+  width: 500px;
+  height: 500px;
+  margin: 10px auto;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+
+  background-color: darkcyan;
+}
+
+.key {
+  display: flex;
+  width: 23%;
+  height: 23%;
+  margin: 3px;
+  position: absolute;
+  z-index: 2;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid burlywood;
+  border-radius: 5px;
+  background-color: #4d64eb;
+  cursor: pointer;
+  user-select: none;  
+  transition: 0.3s linear;
+}
+
+.key:hover {
+  border-color: #584a38;
+}
+
+.key-empty {
+  width: 23%;
+  height: 23%;
+  margin: 3px;
+  position: absolute;
+  z-index: 1;
+  border: 2px solid #e4b57891;
+  border-radius: 5px;
+
+  background-color: #4d65eb75;
+  transition: 0.3s linear;
+}
+
+.key span {
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.rigth-position {
+  border: 2px solid #16ff2ace;
+}
