@@ -1,10 +1,10 @@
-const buttons = ['Start New Game', 'Stop', 'Save', 'Results'];
+const buttons = ['Start New Game', 'Stop', 'Save', 'Load', 'Results'];
 
 // game options
-const GAME_SIZE = 4;
+let GAME_SIZE = 4;
 const GAME_W = 500;
 const margin = 1.5;
-const KEY_SIZE = Math.round((GAME_W - (GAME_SIZE - 1) * margin) / GAME_SIZE);
+let KEY_SIZE = Math.round((GAME_W - (GAME_SIZE - 1) * margin) / GAME_SIZE);
 
 // game state
 let COUNT_STEPS = 0;
@@ -68,28 +68,93 @@ const highlightCorrectPosition = (index) => {
   }
 };
 
+const onCloseModal = () => {
+  document.querySelector('.modal-overlay').remove();
+};
 
-const WinGame = () => {
-  const congratMsg = `You have won the game by ${COUNT_STEPS} moves. Spend time^${TIME_ELAPSED}`;
-  alert(congratMsg);
+const getResults = () => {
+  const results = localStorage.getItem('game-puzzle-results');
+  if (!results) return 'no previous games found.';
+  const lines = results.split('\n', 10).filter((s) => (s));
+  const firstTenResults = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i].split('^');
+    firstTenResults.push(`<b>${i + 1}</b>. Game size: ${line[0]}: ${line[1]} moves in ${line[2]}.<br>`);
+  }
+  return firstTenResults.join('');
+};
 
-  clearTimeout(timerId);
+const saveResult = () => {
+  const results = localStorage.getItem('game-puzzle-results');
+  const lines = (results) ? results.split('\n', 9).filter((s) => (s)) : [];
+  const newRecord = `${GAME_SIZE}^${COUNT_STEPS}^${TIME_ELAPSED}\n`;
+  const res = (results) ? newRecord + lines.join('\n') : newRecord.slice(0, -1);
+  localStorage.setItem('game-puzzle-results', res);
+};
+
+const doModal = (type) => {
+  // overlay
+  const overlay = document.createElement('div');
+  overlay.classList.add('modal-overlay');
+
+  // message
+  const message = document.createElement('div');
+  message.classList.add('message');
+
+  const headerMsg = document.createElement('h2');
+  const bodyMsg = document.createElement('p');
+  headerMsg.classList.add('message-header');
+  bodyMsg.classList.add('message-body');
+
+  switch (type) {
+    case 'Win':
+      headerMsg.innerText = 'You Win!';
+      bodyMsg.innerText = `Statistics:\nMoves: ${COUNT_STEPS}\nSpend time: ${TIME_ELAPSED}.`;
+      break;
+    case 'StartGame':
+      headerMsg.innerHTML = 'Welcome!';
+      bodyMsg.innerHTML = 'Click <b>"Start New Game"</b> to start new game.<br>'
+      + 'Or <b>"Load"</b> to continue previous game.';
+      break;
+    case 'Results':
+      headerMsg.innerHTML = 'Results previous 10 games:';
+      bodyMsg.innerHTML = getResults();
+      break;
+    default:
+      break;
+  }
+
+  message.append(headerMsg);
+  message.append(bodyMsg);
+  overlay.append(message);
+
+  // Ok button
+  const okButton = document.createElement('button');
+  okButton.classList.add('ok-button');
+  okButton.innerText = 'Ok';
+  okButton.addEventListener('click', onCloseModal);
+  overlay.append(okButton);
+
+  document.body.append(overlay);
 };
 
 const startTime = () => {
   TIME_ELAPSED = `${timer.getMinutes().toString().padStart(2, '0')}:${timer.getSeconds().toString().padStart(2, '0')}`;
-
   gameDuration.textContent = TIME_ELAPSED;
-
   timerId = setTimeout(() => {
     timer.setSeconds(timer.getSeconds() + 1);
     startTime();
   }, 1000);
 };
 
-const cntSteps = (start) => {
-  COUNT_STEPS = (start !== 0) ? COUNT_STEPS + 1 : 0;
+const setMoves = (moves) => {
+  COUNT_STEPS = moves;
   document.getElementById('countSteps').textContent = COUNT_STEPS;
+};
+
+const incMoves = (start) => {
+  const add = (start !== undefined) ? start : 1;
+  setMoves(+COUNT_STEPS + add);
 };
 
 const getKeyCoordinateByIndex = (index) => ({ x: (index % GAME_SIZE), y: Math.trunc(index / GAME_SIZE) });
@@ -104,7 +169,7 @@ const getKeyCoordinateByPosition = (elem) => {
   return { x: xx, y: yy };
 };
 
-const createButton = (buttonName) => {
+const createControlButton = (buttonName) => {
   const container = document.querySelector('.control-container');
   const button = document.createElement('button');
   button.classList.add('control-button');
@@ -155,7 +220,6 @@ const moveVertical = (direction, elem) => {
   key.style.top = `${parseInt(elem.style.top) + direction * KEY_SIZE}px`;
 };
 
-
 const createKeys = (position) => {
   const field = document.querySelector('.game-field');
   field.innerHTML = '';
@@ -164,6 +228,8 @@ const createKeys = (position) => {
     key.id = `key${position[i]}`;
     key.style.left = `${getLeftPosition(i)}px`;
     key.style.top = `${getTopPosition(i)}px`;
+    key.style.width = `${Math.round((100 - GAME_SIZE * 2) / GAME_SIZE)}%`;
+    key.style.height = `${Math.round((100 - GAME_SIZE * 2) / GAME_SIZE)}%`;
     if (position[i] > 0) {
       key.classList.add('key');
       key.insertAdjacentHTML('beforeend', `<span>${position[i]}</span>`);
@@ -186,8 +252,9 @@ const createBase = () => {
   // control panel
   const controlContainer = document.createElement('div');
   controlContainer.classList.add('control-container');
+  controlContainer.id = 'controlcontainer';
   wrapper.append(controlContainer);
-  buttons.forEach((btnName) => createButton(btnName));
+  buttons.forEach((btnName) => createControlButton(btnName));
 
   // game state
   const gameState = document.createElement('div');
@@ -201,6 +268,31 @@ const createBase = () => {
   gameField.id = 'gamefield';
   wrapper.append(gameField);
   createKeys(currentPosition);
+
+  // game size
+  const sizeContainer = document.createElement('div');
+  sizeContainer.classList.add('size-container');
+  sizeContainer.id = 'sizecontainer';
+
+  const btnMinus = document.createElement('button');
+  btnMinus.classList.add('button-gamesize');
+  btnMinus.innerText = '-';
+  btnMinus.id = 'sizeminus';
+
+  const gamesize = document.createElement('label');
+  gamesize.classList.add('gamesize');
+  gamesize.innerText = `${GAME_SIZE} x ${GAME_SIZE}`;
+  gamesize.id = 'gamesize';
+
+  const btnPlus = document.createElement('button');
+  btnPlus.classList.add('button-gamesize');
+  btnPlus.innerText = '+';
+  btnPlus.id = 'sizeplus';
+
+  sizeContainer.append(btnMinus);
+  sizeContainer.append(gamesize);
+  sizeContainer.append(btnPlus);
+  wrapper.append(sizeContainer);
 };
 
 const isMoveEnabled = (key, empty) => ((key.x === empty.x && Math.abs(key.y - empty.y) === 1)
@@ -221,6 +313,35 @@ const moveEmptyKey = (keyCoord, newKeyCoord) => {
   EMPTY = newKeyCoord;
 };
 
+const startNewGame = (savedGame) => {
+  clearTimeout(timerId);
+  timer = new Date(0, 0, 0, 0, 0);
+  if (savedGame) {
+    [GAME_SIZE, COUNT_STEPS, TIME_ELAPSED, ...currentPosition] = savedGame;
+    timer.setSeconds(TIME_ELAPSED.slice(3));
+    timer.setMinutes(TIME_ELAPSED.slice(0, 2));
+  } else {
+    TIME_ELAPSED = '00:00';
+    COUNT_STEPS = 0;
+    generateStartPosition();
+  }
+  document.getElementById('timeElapsed').textContent = TIME_ELAPSED;
+  setMoves(COUNT_STEPS);
+  startTime();
+  const stopButton = document.getElementById('Stop');
+  stopButton.innerText = 'Stop';
+  isPaused = false;
+  createKeys(currentPosition);
+  highlightCorrectPosition();
+};
+
+const WinGame = () => {
+  clearTimeout(timerId);
+  saveResult();
+  doModal('Win');
+  startNewGame();
+};
+
 const onClickOnField = (event) => {
   const elem = event.target.closest('div');
   const keyId = event.target.closest('div').id;
@@ -231,7 +352,7 @@ const onClickOnField = (event) => {
     if (isMoveEnabled(keyCoord, EMPTY)) {
       moveKey(keyCoord, EMPTY, elem);
       moveEmptyKey(EMPTY, keyCoord, emptyKey);
-      cntSteps();
+      incMoves();
       savePosition();
       highlightCorrectPosition(keyId.slice(3));
       setTimeout(() => {
@@ -241,42 +362,114 @@ const onClickOnField = (event) => {
   }
 };
 
-const startNewGame = () => {
-  clearTimeout(timerId);
-  document.getElementById('timeElapsed').textContent = '00:00';
-  timer = new Date(0, 0, 0, 0, 0);
-
-  cntSteps(0);
-  startTime();
+const pauseGame = () => {
   const stopButton = document.getElementById('Stop');
-  stopButton.innerText = 'Stop';
-  generateStartPosition();
-  createKeys(currentPosition);
-  highlightCorrectPosition();
+  clearTimeout(timerId);
+  stopButton.innerText = 'Continue';
+  isPaused = true;
 };
 
-const StopGame = () => {
+const resumeGame = () => {
   const stopButton = document.getElementById('Stop');
-  if (isPaused) {
-    startTime();
-    stopButton.innerText = 'Stop';
-  } else {
-    clearTimeout(timerId);
-    stopButton.innerText = 'Continue';
-  }
+  startTime();
+  stopButton.innerText = 'Stop';
+  isPaused = false;
+};
 
-  isPaused = !isPaused;
+const stopGame = () => {
+  if (isPaused) {
+    resumeGame();
+  } else {
+    pauseGame();
+  }
+};
+
+const saveState = (gameState) => {
+  localStorage.setItem('game-puzzle-state', gameState);
+};
+
+const restoreState = () => {
+  const state = localStorage.getItem('game-puzzle-state');
+  return (state) || 'none';
+};
+
+const saveGame = () => {
+  const state = [];
+  state.push(GAME_SIZE);
+  state.push(COUNT_STEPS);
+  state.push(TIME_ELAPSED);
+  state.push(...currentPosition);
+  saveState(state.join('^'));
+};
+
+const loadGame = () => {
+  const state = restoreState().split('^').map((el, i) => (i !== 2 ? +el : el));
+  startNewGame(state);
+};
+
+const showResults = () => {
+  doModal('Results');
+};
+
+const onClickControl = (event) => {
+  if (!event.target.closest('button')) return;
+  const buttonId = event.target.closest('button').id;
+
+  switch (buttonId) {
+    case 'StartNewGame':
+      startNewGame();
+      break;
+    case 'Stop':
+      stopGame();
+      break;
+    case 'Save':
+      saveGame();
+      break;
+    case 'Load':
+      loadGame();
+      break;
+    case 'Results':
+      showResults();
+      pauseGame();
+      break;
+    default:
+      break;
+  }
+};
+
+
+const resizeGame = (newSize) => {
+  if (GAME_SIZE > 2 && GAME_SIZE < 9) {
+    GAME_SIZE += newSize;
+    KEY_SIZE = Math.round((GAME_W - (GAME_SIZE - 1) * margin) / GAME_SIZE);
+    document.getElementById('gamesize').innerText = `${GAME_SIZE} x ${GAME_SIZE}`;
+    generateWinPosition();
+    startNewGame();
+  }
+};
+
+const sizeUp = () => {
+  resizeGame(1);
+  if (GAME_SIZE > 7) document.getElementById('sizeplus').disabled = true;
+  else document.getElementById('sizeminus').disabled = false;
+};
+
+const sizeDown = () => {
+  resizeGame(-1);
+  if (GAME_SIZE < 4) document.getElementById('sizeminus').disabled = true;
+  else document.getElementById('sizeplus').disabled = false;
 };
 
 const setHandlers = () => {
   document.querySelector('.game-field').addEventListener('click', onClickOnField);
-  document.getElementById('StartNewGame').addEventListener('click', startNewGame);
-  document.getElementById('Stop').addEventListener('click', StopGame);
+  document.querySelector('.control-container').addEventListener('click', onClickControl);
+  document.getElementById('sizeminus').addEventListener('click', sizeDown);
+  document.getElementById('sizeplus').addEventListener('click', sizeUp);
 };
 
 window.onload = () => {
   createBase();
   setHandlers();
   generateWinPosition();
-  startNewGame();
+  doModal('StartGame');
 };
