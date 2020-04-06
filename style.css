@@ -1,11 +1,11 @@
 .wrapper {
   width: 600px;
-  height: 650px;
-
+  height: 700px;
   margin: 0 auto;
   padding-top: 1px;
-
-  background-color: #aee4e4;
+  user-select: none;
+  background-color: #698888;
+  border-radius: 10px;  
 }
 
 .control-container {
@@ -14,16 +14,13 @@
   height: 40px;
   margin: 10px auto;
   justify-content: space-around;
-  align-items: center;
-
-
-  background-color: #dba3a3;
+  align-items: center; 
 }
 
 .control-button {
   height: 25px;
   border-radius: 5px;
-  cursor: pointer;
+  cursor: pointer; 
 }
 
 .control-button:hover {
@@ -36,8 +33,6 @@
   height: 30px;
   margin: 0 auto;
   justify-content: space-around;
-
-  background-color: #dba3a3;
 }
 
 .game-state label {
@@ -53,7 +48,6 @@
 }
 
 .game-field {
-  /* display: flex; */
   position: relative;
   width: 500px;
   height: 500px;
@@ -61,8 +55,6 @@
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-
-  background-color: darkcyan;
 }
 
 .key {
@@ -74,7 +66,7 @@
   z-index: 2;
   justify-content: center;
   align-items: center;
-  border: 2px solid burlywood;
+  border: 3px solid #c59454;
   border-radius: 5px;
   background-color: #4d64eb;
   cursor: pointer;
@@ -89,14 +81,6 @@
 .key-empty {
   width: 23%;
   height: 23%;
-  margin: 3px;
-  position: absolute;
-  z-index: 1;
-  border: 2px solid #e4b57891;
-  border-radius: 5px;
-
-  background-color: #4d65eb75;
-  transition: 0.3s linear;
 }
 
 .key span {
@@ -105,5 +89,75 @@
 }
 
 .rigth-position {
-  border: 2px solid #16ff2ace;
+  border: 3px solid #16ff2ace;
+}
+
+.modal-overlay {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  background-color: #5f9ea083;
+}
+
+.message {
+  width: 400px;
+  height: 400px;
+  margin: 20px calc(50% - 200px);
+  background-color: #ffffffd2;
+  border: 2px solid #0000ff;
+  border-radius: 10px;
+}
+
+.message-header {  
+  text-align: center;
+}
+
+.message-body {
+  font-size: 20px;
+  text-align: center;
+}
+
+.ok-button {
+  width: 50px;
+  height: 38px;
+  margin: 10px calc(50% - 25px);
+  font-size: 20px;
+  line-height: 22px;
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  border-radius: 5px;
+  background-color: #ffffff;
+  outline: 0;
+  outline-offset: 0;
+}
+
+.ok-button:hover {
+  background-color: #eedd99;
+}
+
+.size-container {
+  display: flex;
+  width: 500px;
+  height: 40px;
+  margin: 10px auto;
+  justify-content: center;
+  align-items: center; 
+
+  background-color: burlywood;
+}
+
+.button-gamesize {
+  width: 30px;
+  height: 30px;
+  margin: 0 20px;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.gamesize {
+  font-size: 25px;
 }
