@@ -17,6 +17,8 @@ let EMPTY = { x: 0, y: 0 };
 let emptyKey = {};
 let timerId;
 let gameDuration;
+let isDragOn = false;
+let GAME_FIELD = {};
 
 const generateStartPosition = () => {
   const arr = [];
@@ -30,7 +32,6 @@ const generateStartPosition = () => {
       positionsSet.delete(rndPosition);
     }
   }
-  // currentPosition = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 15];
   currentPosition = arr;
 };
 
@@ -187,6 +188,14 @@ const createGameState = () => {
   gameDuration = document.getElementById('timeElapsed');
 };
 
+const getIndexByKeyId = (keyId) => {
+  const keyValue = +keyId.slice(3);
+  for (let i = 0; i < currentPosition.length; i += 1) {
+    if (currentPosition[i] === keyValue) return i;
+  }
+  return 0;
+};
+
 const getTopPosition = (index) => KEY_SIZE * Math.trunc(index / GAME_SIZE);
 
 const getLeftPosition = (index) => KEY_SIZE * (index % GAME_SIZE);
@@ -268,6 +277,7 @@ const createBase = () => {
   gameField.id = 'gamefield';
   wrapper.append(gameField);
   createKeys(currentPosition);
+  GAME_FIELD = document.getElementById('gamefield');
 
   // game size
   const sizeContainer = document.createElement('div');
@@ -308,6 +318,12 @@ const moveKey = (keyCoord, newKeyCoord, elem) => {
   }
 };
 
+const moveKeyToStartPosition = (elem, newKeyCoord) => {
+  const key = elem;
+  key.style.top = `${newKeyCoord.y}px`;
+  key.style.left = `${newKeyCoord.x}px`;
+};
+
 const moveEmptyKey = (keyCoord, newKeyCoord) => {
   moveKey(keyCoord, newKeyCoord, emptyKey);
   EMPTY = newKeyCoord;
@@ -343,6 +359,10 @@ const WinGame = () => {
 };
 
 const onClickOnField = (event) => {
+  if (isDragOn) {
+    isDragOn = true;
+    return;
+  }
   const elem = event.target.closest('div');
   const keyId = event.target.closest('div').id;
 
@@ -460,8 +480,73 @@ const sizeDown = () => {
   else document.getElementById('sizeplus').disabled = false;
 };
 
+const moveAt = (element, x, y) => {
+  const key = element;
+  key.style.left = `${x}px`;
+  key.style.top = `${y}px`;
+};
+
+let draggableKey;
+
+const onMouseMove = (event) => {
+  if (!draggableKey) return;
+
+  const fieldX = GAME_FIELD.getBoundingClientRect().left;
+  const fieldY = GAME_FIELD.getBoundingClientRect().top;
+  const newKeyX = event.pageX - fieldX - draggableKey.shiftX;
+  const newKeyY = event.pageY - fieldY - draggableKey.shiftY;
+
+  moveAt(draggableKey, newKeyX, newKeyY);
+};
+
+const returnKey = (key) => {
+  const keyIndex = getIndexByKeyId(key.id);
+
+  const top = getTopPosition(keyIndex);
+  const left = getLeftPosition(keyIndex);
+  const newCoord = { x: left, y: top };
+
+  moveKeyToStartPosition(key, newCoord);
+};
+
+const onMouseDown = (event) => {
+  const key = event.target.closest('div');
+  const keyId = event.target.closest('div').id;
+
+  if (keyId !== 'gamefield' && keyId !== 'key0') {
+    const keyCoord = getKeyCoordinateByPosition(key);
+    if (isMoveEnabled(keyCoord, EMPTY)) {
+      draggableKey = key;
+
+      draggableKey.shiftX = event.clientX - draggableKey.getBoundingClientRect().left;
+      draggableKey.shiftY = event.clientY - draggableKey.getBoundingClientRect().top;
+
+
+      document.getElementById('gamefield').addEventListener('mousemove', onMouseMove);
+      draggableKey.style.transition = 'none';
+      draggableKey.style.zIndex = 5;
+    }
+  }
+};
+
+const onMouseUp = () => {
+  isDragOn = false;
+  document.getElementById('gamefield').removeEventListener('mousemove', onMouseMove);
+  if (draggableKey) {
+    draggableKey.style.transition = '0.3s linear';
+    draggableKey.style.zIndex = 2;
+    returnKey(draggableKey);
+  }
+  draggableKey = null;
+};
+
+const onDragStart = (event) => event.preventDefault();
+
 const setHandlers = () => {
   document.querySelector('.game-field').addEventListener('click', onClickOnField);
+  document.querySelector('.game-field').addEventListener('ondragstart', onDragStart);
+  document.querySelector('.game-field').addEventListener('mousedown', onMouseDown);
+  document.querySelector('.game-field').addEventListener('mouseup', onMouseUp);
   document.querySelector('.control-container').addEventListener('click', onClickControl);
   document.getElementById('sizeminus').addEventListener('click', sizeDown);
   document.getElementById('sizeplus').addEventListener('click', sizeUp);
