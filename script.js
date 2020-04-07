@@ -22,6 +22,10 @@ let gameDuration;
 let isDragOn = false;
 let draggableKey;
 
+const recalcKeySize = () => {
+  KEY_SIZE = Math.round((GAME_W - (GAME_SIZE - 1) * margin) / GAME_SIZE);
+};
+
 const generateStartPosition = () => {
   const arr = [];
   const positionsSet = new Set(Array(GAME_SIZE * GAME_SIZE).fill(1).map((a, i) => i));
@@ -67,7 +71,7 @@ const highlightCorrectPosition = (index) => {
     const key = document.getElementById(`key${i}`);
     if (winPosition[i - 1] === currentPosition[i - 1]) {
       key.classList.add('rigth-position');
-    } else key.classList.remove('rigth-position');
+    }
   }
 };
 
@@ -118,6 +122,10 @@ const doModal = (type) => {
       headerMsg.innerHTML = 'Welcome!';
       bodyMsg.innerHTML = 'Click <b>"Start New Game"</b> to start new game.<br>'
       + 'Or <b>"Load"</b> to continue previous game.';
+      break;
+    case 'NoSavedGames':
+      headerMsg.innerHTML = 'Welcome!';
+      bodyMsg.innerHTML = 'No saved game found. Click <b>"Start New Game"</b> to start new game.<br>';
       break;
     case 'Results':
       headerMsg.innerHTML = 'Results previous 10 games:';
@@ -331,6 +339,13 @@ const moveEmptyKey = (keyCoord, newKeyCoord) => {
   EMPTY = newKeyCoord;
 };
 
+const disableSizeKeys = () => {
+  document.getElementById('sizeminus').disabled = false;
+  document.getElementById('sizeplus').disabled = false;
+  if (GAME_SIZE > 7) document.getElementById('sizeplus').disabled = true;
+  if (GAME_SIZE < 4) document.getElementById('sizeminus').disabled = true;
+};
+
 const startNewGame = (savedGame) => {
   clearTimeout(timerId);
   timer = new Date(0, 0, 0, 0, 0);
@@ -343,7 +358,10 @@ const startNewGame = (savedGame) => {
     COUNT_STEPS = 0;
     generateStartPosition();
   }
+  recalcKeySize();
   document.getElementById('timeElapsed').textContent = TIME_ELAPSED;
+  document.getElementById('gamesize').innerText = `${GAME_SIZE} x ${GAME_SIZE}`;
+  disableSizeKeys();
   setMoves(COUNT_STEPS);
   startTime();
   const stopButton = document.getElementById('Stop');
@@ -425,8 +443,13 @@ const saveGame = () => {
 };
 
 const loadGame = () => {
-  const state = restoreState().split('^').map((el, i) => (i !== 2 ? +el : el));
-  startNewGame(state);
+  const savedGame = restoreState();
+  if (savedGame === 'none') {
+    doModal('NoSavedGames');
+  } else {
+    const state = savedGame.split('^').map((el, i) => (i !== 2 ? +el : el));
+    startNewGame(state);
+  }
 };
 
 const showResults = () => {
@@ -462,7 +485,7 @@ const onClickControl = (event) => {
 const resizeGame = (newSize) => {
   if (GAME_SIZE > 2 && GAME_SIZE < 9) {
     GAME_SIZE += newSize;
-    KEY_SIZE = Math.round((GAME_W - (GAME_SIZE - 1) * margin) / GAME_SIZE);
+    recalcKeySize();
     document.getElementById('gamesize').innerText = `${GAME_SIZE} x ${GAME_SIZE}`;
     generateWinPosition();
     startNewGame();
@@ -471,14 +494,12 @@ const resizeGame = (newSize) => {
 
 const sizeUp = () => {
   resizeGame(1);
-  if (GAME_SIZE > 7) document.getElementById('sizeplus').disabled = true;
-  else document.getElementById('sizeminus').disabled = false;
+  disableSizeKeys();
 };
 
 const sizeDown = () => {
   resizeGame(-1);
-  if (GAME_SIZE < 4) document.getElementById('sizeminus').disabled = true;
-  else document.getElementById('sizeplus').disabled = false;
+  disableSizeKeys();
 };
 
 const isKeyOutGameField = (event) => {
