@@ -6,7 +6,9 @@ const GAME_W = 500;
 const margin = 1.5;
 let KEY_SIZE = Math.round((GAME_W - (GAME_SIZE - 1) * margin) / GAME_SIZE);
 
+
 // game state
+let GAME_FIELD = {};
 let COUNT_STEPS = 0;
 let TIME_ELAPSED = '00:00';
 let timer = new Date(0, 0, 0, 0, 0);
@@ -18,7 +20,7 @@ let emptyKey = {};
 let timerId;
 let gameDuration;
 let isDragOn = false;
-let GAME_FIELD = {};
+let draggableKey;
 
 const generateStartPosition = () => {
   const arr = [];
@@ -457,7 +459,6 @@ const onClickControl = (event) => {
   }
 };
 
-
 const resizeGame = (newSize) => {
   if (GAME_SIZE > 2 && GAME_SIZE < 9) {
     GAME_SIZE += newSize;
@@ -480,23 +481,20 @@ const sizeDown = () => {
   else document.getElementById('sizeplus').disabled = false;
 };
 
+const isKeyOutGameField = (event) => {
+  const fieldX = GAME_FIELD.getBoundingClientRect().left;
+  const fieldY = GAME_FIELD.getBoundingClientRect().top;
+
+  if (event.pageX < fieldX || event.pageX > fieldX + GAME_W
+    || event.pageY < fieldY || event.pageY > fieldY + GAME_W) return true;
+
+  return false;
+};
+
 const moveAt = (element, x, y) => {
   const key = element;
   key.style.left = `${x}px`;
   key.style.top = `${y}px`;
-};
-
-let draggableKey;
-
-const onMouseMove = (event) => {
-  if (!draggableKey) return;
-
-  const fieldX = GAME_FIELD.getBoundingClientRect().left;
-  const fieldY = GAME_FIELD.getBoundingClientRect().top;
-  const newKeyX = event.pageX - fieldX - draggableKey.shiftX;
-  const newKeyY = event.pageY - fieldY - draggableKey.shiftY;
-
-  moveAt(draggableKey, newKeyX, newKeyY);
 };
 
 const returnKey = (key) => {
@@ -509,6 +507,39 @@ const returnKey = (key) => {
   moveKeyToStartPosition(key, newCoord);
 };
 
+const endDrag = () => {
+  isDragOn = false;
+  // eslint-disable-next-line no-use-before-define
+  document.getElementById('gamefield').removeEventListener('mousemove', onMouseMove);
+  if (draggableKey) {
+    draggableKey.style.transition = '0.3s linear';
+    draggableKey.style.zIndex = 2;
+    returnKey(draggableKey);
+  }
+  draggableKey = null;
+};
+
+const onMouseMove = (event) => {
+  if (!draggableKey) return;
+
+  if (isKeyOutGameField(event)) {
+    returnKey(draggableKey);
+    endDrag();
+    return;
+  }
+
+  const fieldX = GAME_FIELD.getBoundingClientRect().left;
+  const fieldY = GAME_FIELD.getBoundingClientRect().top;
+  const newKeyX = event.pageX - fieldX - draggableKey.shiftX;
+  const newKeyY = event.pageY - fieldY - draggableKey.shiftY;
+
+  moveAt(draggableKey, newKeyX, newKeyY);
+};
+
+const onMouseUp = () => {
+  endDrag();
+};
+
 const onMouseDown = (event) => {
   const key = event.target.closest('div');
   const keyId = event.target.closest('div').id;
@@ -517,27 +548,14 @@ const onMouseDown = (event) => {
     const keyCoord = getKeyCoordinateByPosition(key);
     if (isMoveEnabled(keyCoord, EMPTY)) {
       draggableKey = key;
-
       draggableKey.shiftX = event.clientX - draggableKey.getBoundingClientRect().left;
       draggableKey.shiftY = event.clientY - draggableKey.getBoundingClientRect().top;
-
 
       document.getElementById('gamefield').addEventListener('mousemove', onMouseMove);
       draggableKey.style.transition = 'none';
       draggableKey.style.zIndex = 5;
     }
   }
-};
-
-const onMouseUp = () => {
-  isDragOn = false;
-  document.getElementById('gamefield').removeEventListener('mousemove', onMouseMove);
-  if (draggableKey) {
-    draggableKey.style.transition = '0.3s linear';
-    draggableKey.style.zIndex = 2;
-    returnKey(draggableKey);
-  }
-  draggableKey = null;
 };
 
 const onDragStart = (event) => event.preventDefault();
